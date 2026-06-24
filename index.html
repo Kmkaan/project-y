@@ -118,32 +118,47 @@
         .tab-content { display: none; padding: 1rem; max-width: 680px; margin: 0 auto; }
         .tab-content.active { display: block; }
 
-        /* ── Summary cards ── */
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.5rem; margin: 1rem 0;
-        }
-        .card {
+        /* ── Stats bar (replaces 3-col grid) ── */
+        .stats-bar {
             background: var(--surface);
-            border-radius: 12px; padding: 0.75rem 0.6rem;
+            border-radius: 12px;
             box-shadow: var(--shadow);
-            transition: background 0.25s, box-shadow 0.25s;
+            margin: 1rem 0;
+            display: flex;
+            align-items: stretch;
+            transition: background 0.25s;
+            overflow: hidden;
+        }
+        .stat {
+            flex: 1;
+            padding: 0.85rem 0.5rem;
+            text-align: center;
             min-width: 0;
         }
-        .card-label {
-            font-size: 0.62rem; color: var(--text-muted);
-            text-transform: uppercase; letter-spacing: 0.04em;
-            margin-bottom: 0.3rem; white-space: nowrap;
+        .stat + .stat {
+            border-left: 1px solid var(--border);
         }
-        .card-value {
-            font-size: 1.05rem; font-weight: 800;
-            white-space: nowrap; overflow: hidden;
-            text-overflow: ellipsis; letter-spacing: -0.01em;
+        .stat-label {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.3rem;
+            white-space: nowrap;
         }
-        .card-unit {
-            font-size: 0.58rem; font-weight: 600;
-            color: var(--text-muted); margin-top: 0.1rem;
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: 800;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: -0.01em;
+        }
+        .stat-unit {
+            font-size: 0.55rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-top: 0.1rem;
         }
         .green  { color: #38a169; }
         .blue   { color: #3182ce; }
@@ -347,21 +362,19 @@
             font-size: 1rem !important; padding: 0 !important;
         }
 
-        @media (max-width: 400px) {
-            .card-value     { font-size: 0.9rem; }
-            .card-label     { font-size: 0.58rem; }
-            .card           { padding: 0.65rem 0.5rem; }
+        @media (max-width: 480px) {
+            /* Stack date + amount vertically so neither gets squished */
+            .form-row { grid-template-columns: 1fr; gap: 0.5rem; }
         }
         @media (max-width: 360px) {
-            .card-value     { font-size: 0.78rem; }
-            .card-label     { font-size: 0.55rem; }
-            .card           { padding: 0.55rem 0.35rem; }
+            .stat-value     { font-size: 0.92rem; }
+            .stat-label     { font-size: 0.55rem; }
+            .stat           { padding: 0.7rem 0.3rem; }
             .balance-value  { font-size: 1.55rem; }
             .bal-sub-value  { font-size: 0.75rem; }
             #clock-time     { font-size: 1rem; }
             .tab-btn        { font-size: 0.7rem; padding: 0.6rem 0.25rem; }
             .tab-content    { padding: 0.75rem; }
-            .summary-grid   { gap: 0.35rem; }
         }
     </style>
 </head>
@@ -392,21 +405,21 @@
 <!-- ════════════ TAXI TAB ════════════ -->
 <div id="tab-taxi" class="tab-content active">
 
-    <div class="summary-grid">
-        <div class="card">
-            <div class="card-label">Today</div>
-            <div class="card-value green"  id="taxi-today">0.00</div>
-            <div class="card-unit">RF</div>
+    <div class="stats-bar">
+        <div class="stat">
+            <div class="stat-label">Today</div>
+            <div class="stat-value green"  id="taxi-today">0.00</div>
+            <div class="stat-unit">RF</div>
         </div>
-        <div class="card">
-            <div class="card-label">This Week</div>
-            <div class="card-value blue"   id="taxi-week">0.00</div>
-            <div class="card-unit">RF</div>
+        <div class="stat">
+            <div class="stat-label">This Week</div>
+            <div class="stat-value blue"   id="taxi-week">0.00</div>
+            <div class="stat-unit">RF</div>
         </div>
-        <div class="card">
-            <div class="card-label">This Month</div>
-            <div class="card-value orange" id="taxi-month">0.00</div>
-            <div class="card-unit">RF</div>
+        <div class="stat">
+            <div class="stat-label">This Month</div>
+            <div class="stat-value orange" id="taxi-month">0.00</div>
+            <div class="stat-unit">RF</div>
         </div>
     </div>
 
