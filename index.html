@@ -103,10 +103,10 @@
         /* ── Tabs ── */
         .tab-nav { display: flex; background: var(--nav-bg); transition: background 0.25s; }
         .tab-btn {
-            flex: 1; padding: 0.7rem 0.4rem;
+            flex: 1; padding: 0.65rem 0.25rem;
             border: none; background: transparent;
             color: var(--nav-muted);
-            font-size: 0.8rem; font-weight: 600;
+            font-size: 0.73rem; font-weight: 600;
             cursor: pointer; border-bottom: 3px solid transparent;
             transition: all 0.2s; white-space: nowrap;
         }
@@ -120,7 +120,7 @@
         .tab-content { display: none; padding: 1rem; max-width: 680px; margin: 0 auto; }
         .tab-content.active { display: block; }
 
-        /* ── Stats bar (replaces 3-col grid) ── */
+        /* ── Stats bar ── */
         .stats-bar {
             background: var(--surface);
             border-radius: 12px;
@@ -137,9 +137,7 @@
             text-align: center;
             min-width: 0;
         }
-        .stat + .stat {
-            border-left: 1px solid var(--border);
-        }
+        .stat + .stat { border-left: 1px solid var(--border); }
         .stat-label {
             font-size: 0.6rem;
             color: var(--text-muted);
@@ -165,6 +163,34 @@
         .green  { color: #38a169; }
         .blue   { color: #3182ce; }
         .orange { color: #dd6b20; }
+
+        /* ── Goal card ── */
+        .goal-card { padding: 0.85rem 1rem; margin-bottom: 1rem; }
+        .goal-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 0.55rem;
+        }
+        .goal-edit-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.7rem; font-weight: 600;
+            border-radius: 6px; padding: 0.18rem 0.5rem;
+            cursor: pointer; transition: border-color 0.2s;
+        }
+        .goal-edit-btn:hover { border-color: #4299e1; color: #4299e1; }
+        .goal-bar-wrap {
+            background: var(--border);
+            border-radius: 999px;
+            height: 8px; overflow: hidden; margin-bottom: 0.45rem;
+        }
+        .goal-bar-fill {
+            height: 100%; border-radius: 999px;
+            background: linear-gradient(to right, #2f855a, #68d391);
+            transition: width 0.5s ease;
+        }
+        .goal-bar-fill.done { background: linear-gradient(to right, #b7791f, #f6e05e); }
+        .goal-footer { display: flex; justify-content: space-between; align-items: center; }
 
         /* ── Chart ── */
         .chart-card {
@@ -249,14 +275,8 @@
             box-sizing: border-box;
             transition: border-color 0.2s, background 0.25s, color 0.25s;
         }
-        input[type="date"] {
-            -webkit-appearance: none;
-            appearance: none;
-            text-align: left;
-        }
-        input:focus, select:focus {
-            border-color: #4299e1; background: var(--surface);
-        }
+        input[type="date"] { -webkit-appearance: none; appearance: none; text-align: left; }
+        input:focus, select:focus { border-color: #4299e1; background: var(--surface); }
 
         /* ── Type toggle ── */
         .type-toggle {
@@ -355,6 +375,17 @@
             transition: background 0.25s, color 0.25s;
         }
 
+        /* ── Summary ── */
+        .summary-row {
+            display: flex; justify-content: space-between;
+            align-items: center; font-size: 0.85rem;
+        }
+        .summary-row > span:first-child { color: var(--text-muted); }
+        .summary-divider {
+            border-top: 1px solid var(--border);
+            margin-top: 0.2rem; padding-top: 0.5rem;
+        }
+
         /* ── Install banner ── */
         #install-banner {
             display: none; background: #2d3748; color: white;
@@ -373,7 +404,6 @@
         }
 
         @media (max-width: 480px) {
-            /* Stack date + amount vertically so neither gets squished */
             .form-row { grid-template-columns: 1fr; gap: 0.5rem; }
         }
         @media (max-width: 360px) {
@@ -383,7 +413,7 @@
             .balance-value  { font-size: 1.55rem; }
             .bal-sub-value  { font-size: 0.75rem; }
             #clock-time     { font-size: 1rem; }
-            .tab-btn        { font-size: 0.7rem; padding: 0.6rem 0.25rem; }
+            .tab-btn        { font-size: 0.62rem; padding: 0.6rem 0.15rem; }
             .tab-content    { padding: 0.75rem; }
         }
     </style>
@@ -408,8 +438,10 @@
 </div>
 
 <div class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('taxi')">🚖 Taxi Income</button>
-    <button class="tab-btn"        onclick="switchTab('budget')">💰 Budget</button>
+    <button class="tab-btn active" data-tab="taxi"    onclick="switchTab('taxi')">🚖 Taxi</button>
+    <button class="tab-btn"        data-tab="budget"  onclick="switchTab('budget')">💰 Budget</button>
+    <button class="tab-btn"        data-tab="fuel"    onclick="switchTab('fuel')">⛽ Fuel</button>
+    <button class="tab-btn"        data-tab="summary" onclick="switchTab('summary')">📊 Report</button>
 </div>
 
 <!-- ════════════ TAXI TAB ════════════ -->
@@ -430,6 +462,21 @@
             <div class="stat-label">This Month</div>
             <div class="stat-value orange" id="taxi-month">0.00</div>
             <div class="stat-unit">RF</div>
+        </div>
+    </div>
+
+    <!-- Daily goal -->
+    <div class="form-card goal-card">
+        <div class="goal-header">
+            <span class="form-title" style="margin-bottom:0">Daily Goal</span>
+            <button class="goal-edit-btn" onclick="editGoal()">Edit</button>
+        </div>
+        <div class="goal-bar-wrap">
+            <div class="goal-bar-fill" id="goal-bar-fill" style="width:0%"></div>
+        </div>
+        <div class="goal-footer">
+            <span id="goal-text" style="color:var(--text-muted);font-size:0.82rem">Tap Edit to set a daily goal</span>
+            <span id="goal-pct" style="font-size:0.82rem;font-weight:700"></span>
         </div>
     </div>
 
@@ -480,7 +527,6 @@
 
     <div style="height:1.1rem"></div>
 
-    <!-- Earnings chart -->
     <div class="chart-card">
         <div class="chart-header">
             <span class="chart-title">Earnings Chart</span>
@@ -515,13 +561,11 @@
         </div>
     </div>
 
-    <!-- Savings accounts breakdown -->
     <div id="savings-breakdown" style="display:none">
         <div class="section-title">🏦 Savings Accounts</div>
         <div class="entry-list" id="savings-list" style="margin-bottom:1rem"></div>
     </div>
 
-    <!-- Loans breakdown -->
     <div id="loans-breakdown" style="display:none">
         <div class="section-title">💳 Loans</div>
         <div class="entry-list" id="loans-list" style="margin-bottom:1rem"></div>
@@ -554,7 +598,6 @@
             </div>
         </div>
 
-        <!-- Category (income / expense only) -->
         <div class="form-group" id="cat-group" style="margin-bottom:0.6rem">
             <label for="budget-cat">Category</label>
             <select id="budget-cat">
@@ -572,14 +615,12 @@
             </select>
         </div>
 
-        <!-- Savings account (savings / withdrawal only) -->
         <div class="form-group" id="acct-group" style="display:none; margin-bottom:0.6rem">
             <label for="budget-account">Savings Account</label>
             <input type="text" id="budget-account" placeholder="e.g. Emergency Fund, House…" list="acct-list" autocomplete="off">
             <datalist id="acct-list"></datalist>
         </div>
 
-        <!-- Loan name (loan / repayment only) -->
         <div class="form-group" id="loan-name-group" style="display:none; margin-bottom:0.6rem">
             <label for="budget-loan-name">Loan Name</label>
             <input type="text" id="budget-loan-name" placeholder="e.g. Bank Loan, Personal…" list="loan-list" autocomplete="off">
@@ -598,6 +639,72 @@
     <div class="entry-list" id="budget-list"></div>
 </div>
 
+<!-- ════════════ FUEL TAB ════════════ -->
+<div id="tab-fuel" class="tab-content">
+
+    <div class="stats-bar" style="margin-top:1rem">
+        <div class="stat">
+            <div class="stat-label">This Week</div>
+            <div class="stat-value blue"   id="fuel-week">0.00</div>
+            <div class="stat-unit">RF</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">This Month</div>
+            <div class="stat-value orange" id="fuel-month">0.00</div>
+            <div class="stat-unit">RF</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">Avg / Fill</div>
+            <div class="stat-value green"  id="fuel-avg">0</div>
+            <div class="stat-unit">Liters</div>
+        </div>
+    </div>
+
+    <div class="form-card">
+        <div class="form-title">Log Fuel Fill</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="fuel-date">Date</label>
+                <input type="date" id="fuel-date">
+            </div>
+            <div class="form-group">
+                <label for="fuel-cost">Cost (RF)</label>
+                <input type="number" id="fuel-cost" placeholder="0" min="0" step="0.01" inputmode="decimal">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="fuel-liters">Liters</label>
+                <input type="number" id="fuel-liters" placeholder="0" min="0" step="0.1" inputmode="decimal">
+            </div>
+            <div class="form-group">
+                <label for="fuel-note">Note (optional)</label>
+                <input type="text" id="fuel-note" placeholder="Station, etc.">
+            </div>
+        </div>
+        <button class="btn btn-dark" onclick="addFuel()">⛽ Log Fill</button>
+    </div>
+
+    <div class="section-title">Fuel History</div>
+    <div class="entry-list" id="fuel-list"></div>
+</div>
+
+<!-- ════════════ REPORT TAB ════════════ -->
+<div id="tab-summary" class="tab-content">
+
+    <div class="section-title" style="margin-top:1rem">Monthly Overview</div>
+    <div id="monthly-cards"></div>
+
+    <div class="section-title">Export Data</div>
+    <div class="form-card">
+        <div style="display:flex;flex-direction:column;gap:0.5rem">
+            <button class="btn btn-dark" style="margin-top:0" onclick="exportCSV('taxi')">⬇ Taxi Data (CSV)</button>
+            <button class="btn btn-dark" style="margin-top:0" onclick="exportCSV('budget')">⬇ Budget Data (CSV)</button>
+            <button class="btn btn-dark" style="margin-top:0" onclick="exportCSV('fuel')">⬇ Fuel Data (CSV)</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // TZ must be declared first — used in boot before helpers are reached
 const TZ = 'Indian/Maldives';
@@ -606,8 +713,10 @@ const TZ = 'Indian/Maldives';
 let taxiEntries   = JSON.parse(localStorage.getItem('taxi_entries')   || '[]');
 let taxiTrips     = JSON.parse(localStorage.getItem('taxi_trips')     || '[]');
 let budgetEntries = JSON.parse(localStorage.getItem('budget_entries') || '[]');
+let fuelEntries   = JSON.parse(localStorage.getItem('fuel_entries')   || '[]');
 let budgetType    = 'income';
 let activeChart   = 'daily';
+let dailyGoal     = parseFloat(localStorage.getItem('daily_goal') || '0');
 
 // ── Helpers ────────────────────────────────────────────────────
 function todayStr() {
@@ -650,6 +759,7 @@ function thisMonth() {
 document.getElementById('taxi-date').value   = todayStr();
 document.getElementById('trip-date').value   = todayStr();
 document.getElementById('budget-date').value = todayStr();
+document.getElementById('fuel-date').value   = todayStr();
 
 if (localStorage.getItem('dark_mode') === '1') applyDark(true);
 
@@ -657,6 +767,8 @@ renderTaxi();
 renderTrips();
 renderBudget();
 renderChart();
+renderFuel();
+renderGoal();
 autoSyncTaxiToBudget();
 
 // ── Clock ──────────────────────────────────────────────────────
@@ -709,11 +821,13 @@ document.getElementById('install-dismiss').onclick = () => {
 
 // ── Tab switch ─────────────────────────────────────────────────
 function switchTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach((b, i) => {
-        b.classList.toggle('active', (tab === 'taxi' && i === 0) || (tab === 'budget' && i === 1));
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
     });
-    document.getElementById('tab-taxi').classList.toggle('active',   tab === 'taxi');
-    document.getElementById('tab-budget').classList.toggle('active', tab === 'budget');
+    ['taxi','budget','fuel','summary'].forEach(t => {
+        document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    });
+    if (tab === 'summary') renderSummary();
 }
 
 // ── Chart ──────────────────────────────────────────────────────
@@ -770,6 +884,44 @@ function renderChart() {
     }).join('');
 }
 
+// ── Daily goal ─────────────────────────────────────────────────
+function editGoal() {
+    const input = prompt('Set daily earnings goal (RF):', dailyGoal > 0 ? dailyGoal : '');
+    if (input === null) return;
+    const n = parseFloat(input);
+    if (isNaN(n) || n < 0) { alert('Enter a valid amount.'); return; }
+    dailyGoal = n;
+    localStorage.setItem('daily_goal', n);
+    renderGoal();
+}
+
+function renderGoal() {
+    const t = todayStr();
+    const todayTotal = [...taxiEntries, ...taxiTrips]
+        .filter(e => e.date === t)
+        .reduce((s, e) => s + e.amount, 0);
+
+    const fill = document.getElementById('goal-bar-fill');
+    const txt  = document.getElementById('goal-text');
+    const pct  = document.getElementById('goal-pct');
+
+    if (!dailyGoal) {
+        fill.style.width = '0%';
+        fill.className = 'goal-bar-fill';
+        txt.textContent = 'Tap Edit to set a daily goal';
+        pct.textContent = '';
+        return;
+    }
+
+    const p    = Math.min((todayTotal / dailyGoal) * 100, 100);
+    const done = todayTotal >= dailyGoal;
+    fill.style.width = p + '%';
+    fill.className   = 'goal-bar-fill' + (done ? ' done' : '');
+    txt.textContent  = `${fmt(todayTotal)} of ${fmt(dailyGoal)}`;
+    pct.textContent  = done ? '✓ Done!' : Math.round(p) + '%';
+    pct.style.color  = done ? '#f6e05e' : '#38a169';
+}
+
 // ── Taxi entries ───────────────────────────────────────────────
 function addTaxiEntry() {
     const date   = document.getElementById('taxi-date').value;
@@ -781,14 +933,14 @@ function addTaxiEntry() {
     document.getElementById('taxi-amount').value = '';
     document.getElementById('taxi-note').value   = '';
     document.getElementById('taxi-date').value   = todayStr();
-    renderTaxi(); renderChart(); autoSyncTaxiToBudget();
+    renderTaxi(); renderChart(); renderGoal(); autoSyncTaxiToBudget();
 }
 
 function deleteTaxi(id) {
     if (!confirm('Delete this entry?')) return;
     taxiEntries = taxiEntries.filter(e => e.id !== id);
     localStorage.setItem('taxi_entries', JSON.stringify(taxiEntries));
-    renderTaxi(); renderChart(); autoSyncTaxiToBudget();
+    renderTaxi(); renderChart(); renderGoal(); autoSyncTaxiToBudget();
 }
 
 function renderTaxi() {
@@ -832,14 +984,14 @@ function addTrip() {
     document.getElementById('trip-amount').value = '';
     document.getElementById('trip-note').value   = '';
     document.getElementById('trip-date').value   = todayStr();
-    renderTrips(); renderTaxi(); renderChart(); autoSyncTaxiToBudget();
+    renderTrips(); renderTaxi(); renderChart(); renderGoal(); autoSyncTaxiToBudget();
 }
 
 function deleteTrip(id) {
     if (!confirm('Delete this trip?')) return;
     taxiTrips = taxiTrips.filter(e => e.id !== id);
     localStorage.setItem('taxi_trips', JSON.stringify(taxiTrips));
-    renderTrips(); renderTaxi(); renderChart(); autoSyncTaxiToBudget();
+    renderTrips(); renderTaxi(); renderChart(); renderGoal(); autoSyncTaxiToBudget();
 }
 
 function renderTrips() {
@@ -861,12 +1013,64 @@ function renderTrips() {
         </div>`).join('');
 }
 
+// ── Fuel ───────────────────────────────────────────────────────
+function addFuel() {
+    const date   = document.getElementById('fuel-date').value;
+    const cost   = parseFloat(document.getElementById('fuel-cost').value);
+    const liters = parseFloat(document.getElementById('fuel-liters').value) || 0;
+    const note   = document.getElementById('fuel-note').value.trim();
+    if (!date || !cost || cost <= 0) { alert('Enter a valid date and cost.'); return; }
+    fuelEntries.unshift({ id: Date.now(), date, cost, liters, note });
+    localStorage.setItem('fuel_entries', JSON.stringify(fuelEntries));
+    document.getElementById('fuel-cost').value   = '';
+    document.getElementById('fuel-liters').value = '';
+    document.getElementById('fuel-note').value   = '';
+    document.getElementById('fuel-date').value   = todayStr();
+    renderFuel();
+}
+
+function deleteFuel(id) {
+    if (!confirm('Delete this fuel entry?')) return;
+    fuelEntries = fuelEntries.filter(e => e.id !== id);
+    localStorage.setItem('fuel_entries', JSON.stringify(fuelEntries));
+    renderFuel();
+}
+
+function renderFuel() {
+    const ws = weekStart(), ms = thisMonth();
+    let week = 0, month = 0, totalLiters = 0, fills = 0;
+    fuelEntries.forEach(e => {
+        if (e.date >= ws)          week  += e.cost;
+        if (e.date.startsWith(ms)) month += e.cost;
+        if (e.liters > 0) { totalLiters += e.liters; fills++; }
+    });
+    document.getElementById('fuel-week').textContent  = fmtNum(week);
+    document.getElementById('fuel-month').textContent = fmtNum(month);
+    document.getElementById('fuel-avg').textContent   = fills > 0 ? (totalLiters / fills).toFixed(1) : '0';
+
+    const list = document.getElementById('fuel-list');
+    if (!fuelEntries.length) {
+        list.innerHTML = '<div class="empty-state">No fuel fills logged yet — add your first fill above.</div>';
+        return;
+    }
+    list.innerHTML = fuelEntries.map(e => `
+        <div class="entry-item">
+            <div class="entry-meta">
+                <div class="entry-date">${fmtDate(e.date)}${e.liters > 0 ? ` · <span class="tag">${e.liters}L</span>` : ''}</div>
+                ${e.note ? `<div class="entry-note">${e.note}</div>` : ''}
+            </div>
+            <div class="entry-right">
+                <span class="entry-amount amt-expense">${fmt(e.cost)}</span>
+                <button class="del-btn" onclick="deleteFuel(${e.id})">✕</button>
+            </div>
+        </div>`).join('');
+}
+
 // ── Auto-sync taxi → budget ────────────────────────────────────
 function autoSyncTaxiToBudget() {
     const today = todayStr();
     const all   = [...taxiEntries, ...taxiTrips];
 
-    // Sum earnings per past date
     const dateMap = {};
     all.forEach(e => {
         if (e.date < today) dateMap[e.date] = (dateMap[e.date] || 0) + e.amount;
@@ -874,31 +1078,21 @@ function autoSyncTaxiToBudget() {
 
     let changed = false;
 
-    // Upsert a budget income entry for each past date with earnings
     Object.entries(dateMap).forEach(([date, total]) => {
         if (total <= 0) return;
         const existing = budgetEntries.find(e => e.autoSync && e.syncDate === date);
         if (existing) {
-            if (Math.abs(existing.amount - total) > 0.001) {
-                existing.amount = total;
-                changed = true;
-            }
+            if (Math.abs(existing.amount - total) > 0.001) { existing.amount = total; changed = true; }
         } else {
             budgetEntries.push({
                 id: Date.now() + (Math.random() * 999 | 0),
-                date,
-                type: 'income',
-                cat: 'Taxi Income',
-                amount: total,
-                note: 'Auto — daily taxi earnings',
-                autoSync: true,
-                syncDate: date
+                date, type: 'income', cat: 'Taxi Income', amount: total,
+                note: 'Auto — daily taxi earnings', autoSync: true, syncDate: date
             });
             changed = true;
         }
     });
 
-    // Remove stale auto-sync entries for dates that no longer have taxi data
     const before = budgetEntries.length;
     budgetEntries = budgetEntries.filter(e => !e.autoSync || (dateMap[e.syncDate] && dateMap[e.syncDate] > 0));
     if (budgetEntries.length !== before) changed = true;
@@ -943,12 +1137,12 @@ function setType(type) {
 }
 
 function addBudgetEntry() {
-    const date      = document.getElementById('budget-date').value;
-    const amount    = parseFloat(document.getElementById('budget-amount').value);
-    const cat       = document.getElementById('budget-cat').value;
-    const account   = document.getElementById('budget-account').value.trim() || 'General';
-    const loanName  = document.getElementById('budget-loan-name').value.trim() || 'Loan';
-    const note      = document.getElementById('budget-note').value.trim();
+    const date     = document.getElementById('budget-date').value;
+    const amount   = parseFloat(document.getElementById('budget-amount').value);
+    const cat      = document.getElementById('budget-cat').value;
+    const account  = document.getElementById('budget-account').value.trim()   || 'General';
+    const loanName = document.getElementById('budget-loan-name').value.trim() || 'Loan';
+    const note     = document.getElementById('budget-note').value.trim();
 
     if (!date || !amount || amount <= 0) { alert('Enter a valid date and amount.'); return; }
 
@@ -982,10 +1176,8 @@ function renderBudget() {
     budgetEntries.forEach(e => {
         const a = e.amount;
         switch (e.type) {
-            case 'income':
-                cash += a; break;
-            case 'expense':
-                cash -= a; break;
+            case 'income':     cash += a; break;
+            case 'expense':    cash -= a; break;
             case 'savings': {
                 cash -= a; totalSavings += a;
                 const k = e.account || 'General';
@@ -1014,42 +1206,33 @@ function renderBudget() {
     });
 
     const netWorth = cash + totalSavings - totalDebt;
-
     const balEl = document.getElementById('budget-balance');
     balEl.textContent = fmt(cash);
     balEl.className   = 'balance-value ' + (cash >= 0 ? 'bal-pos' : 'bal-neg');
-
-    document.getElementById('b-savings').textContent  = fmt(totalSavings);
-    document.getElementById('b-debt').textContent     = fmt(totalDebt);
+    document.getElementById('b-savings').textContent = fmt(totalSavings);
+    document.getElementById('b-debt').textContent    = fmt(totalDebt);
     const nwEl = document.getElementById('b-networth');
     nwEl.textContent = fmt(netWorth);
     nwEl.style.color = netWorth >= 0 ? '#68d391' : '#fc8181';
 
-    // Savings breakdown
     const savAccts = Object.entries(savingsAccts).filter(([,v]) => v !== 0);
     const sbWrap = document.getElementById('savings-breakdown');
     sbWrap.style.display = savAccts.length ? 'block' : 'none';
     document.getElementById('savings-list').innerHTML = savAccts.map(([name, bal]) => `
         <div class="entry-item">
             <div class="entry-meta"><div class="entry-note">${name}</div></div>
-            <div class="entry-right">
-                <span class="entry-amount amt-saving">${fmt(bal)}</span>
-            </div>
+            <div class="entry-right"><span class="entry-amount amt-saving">${fmt(bal)}</span></div>
         </div>`).join('');
 
-    // Loans breakdown
     const loanEntries = Object.entries(loansMap).filter(([,v]) => v > 0);
     const lbWrap = document.getElementById('loans-breakdown');
     lbWrap.style.display = loanEntries.length ? 'block' : 'none';
     document.getElementById('loans-list').innerHTML = loanEntries.map(([name, bal]) => `
         <div class="entry-item">
             <div class="entry-meta"><div class="entry-note">${name}</div></div>
-            <div class="entry-right">
-                <span class="entry-amount amt-expense">${fmt(bal)} owed</span>
-            </div>
+            <div class="entry-right"><span class="entry-amount amt-expense">${fmt(bal)} owed</span></div>
         </div>`).join('');
 
-    // Update datalists for autocomplete
     const acctNames = [...new Set(budgetEntries
         .filter(e => e.type === 'savings' || e.type === 'withdrawal')
         .map(e => e.account || 'General'))];
@@ -1060,7 +1243,6 @@ function renderBudget() {
         .map(e => e.loanName || 'Loan'))];
     document.getElementById('loan-list').innerHTML = loanNames.map(n => `<option value="${n}">`).join('');
 
-    // Transactions list
     const list = document.getElementById('budget-list');
     if (!budgetEntries.length) {
         list.innerHTML = '<div class="empty-state">No entries yet — add your first transaction above.</div>';
@@ -1087,6 +1269,84 @@ function renderBudget() {
                 </div>
             </div>`;
     }).join('');
+}
+
+// ── Monthly summary ────────────────────────────────────────────
+function renderSummary() {
+    const now    = new Date();
+    const months = [];
+
+    for (let i = 5; i >= 0; i--) {
+        const d     = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const ms    = d.toLocaleDateString('en-CA').slice(0, 7);
+        const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+        const allTaxi  = [...taxiEntries, ...taxiTrips];
+        const taxiTotal = allTaxi.filter(e => e.date.startsWith(ms)).reduce((s, e) => s + e.amount, 0);
+
+        const mb       = budgetEntries.filter(e => !e.autoSync && e.date.startsWith(ms));
+        const income   = mb.filter(e => e.type === 'income').reduce((s, e) => s + e.amount, 0);
+        const expenses = mb.filter(e => e.type === 'expense').reduce((s, e) => s + e.amount, 0);
+        const savings  = mb.filter(e => e.type === 'savings').reduce((s, e) => s + e.amount, 0);
+        const fuel     = fuelEntries.filter(e => e.date.startsWith(ms)).reduce((s, e) => s + e.cost, 0);
+
+        months.push({ label, taxiTotal, income, expenses, savings, fuel });
+    }
+
+    document.getElementById('monthly-cards').innerHTML = months.map(m => {
+        const net     = m.taxiTotal + m.income - m.expenses - m.fuel;
+        const hasData = m.taxiTotal || m.income || m.expenses || m.fuel || m.savings;
+        return `
+        <div class="form-card" style="margin-bottom:0.75rem${!hasData ? ';opacity:0.45' : ''}">
+            <div class="form-title" style="margin-bottom:0.65rem">${m.label}</div>
+            <div style="display:flex;flex-direction:column;gap:0.5rem">
+                <div class="summary-row"><span>🚖 Taxi Earnings</span><span class="green">${fmt(m.taxiTotal)}</span></div>
+                <div class="summary-row"><span>💵 Other Income</span><span class="green">${fmt(m.income)}</span></div>
+                <div class="summary-row"><span>💸 Expenses</span><span style="color:#e53e3e">${fmt(m.expenses)}</span></div>
+                <div class="summary-row"><span>⛽ Fuel</span><span style="color:#dd6b20">${fmt(m.fuel)}</span></div>
+                <div class="summary-row"><span>🏦 Savings Added</span><span style="color:#3182ce">${fmt(m.savings)}</span></div>
+                <div class="summary-row summary-divider">
+                    <span style="font-weight:700;color:var(--text)">Net</span>
+                    <span style="font-weight:800;color:${net >= 0 ? '#38a169' : '#e53e3e'}">${fmt(net)}</span>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ── Export CSV ─────────────────────────────────────────────────
+function exportCSV(type) {
+    let rows, filename;
+
+    if (type === 'taxi') {
+        filename = 'taxi-' + todayStr() + '.csv';
+        rows = [['Date','Type','Amount (RF)','Note']];
+        [...taxiEntries.map(e => [e.date, 'Earnings', e.amount, e.note||'']),
+         ...taxiTrips.map(e   => [e.date, 'Trip',     e.amount, e.note||''])]
+            .sort((a, b) => b[0].localeCompare(a[0]))
+            .forEach(r => rows.push(r));
+    } else if (type === 'budget') {
+        filename = 'budget-' + todayStr() + '.csv';
+        rows = [['Date','Type','Category / Account','Amount (RF)','Note']];
+        budgetEntries.filter(e => !e.autoSync).forEach(e => {
+            const label =
+                (e.type === 'savings'||e.type === 'withdrawal') ? (e.account  || 'General') :
+                (e.type === 'loan'   ||e.type === 'repayment')  ? (e.loanName || 'Loan')    :
+                (e.cat || '');
+            rows.push([e.date, e.type, label, e.amount, e.note||'']);
+        });
+    } else {
+        filename = 'fuel-' + todayStr() + '.csv';
+        rows = [['Date','Cost (RF)','Liters','Note']];
+        fuelEntries.forEach(e => rows.push([e.date, e.cost, e.liters||'', e.note||'']));
+    }
+
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+    const a   = document.createElement('a');
+    a.href     = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
 }
 </script>
 </body>
