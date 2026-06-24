@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head><title>Generate Icons</title></head>
+<body>
+<canvas id="c192" width="192" height="192"></canvas>
+<canvas id="c512" width="512" height="512"></canvas>
+<button onclick="generate()">Generate & Download Icons</button>
+<script>
+function drawIcon(canvas, size) {
+    const ctx = canvas.getContext('2d');
+    const r = size * 0.18;
+
+    // Background gradient
+    const bg = ctx.createLinearGradient(0, 0, size, size);
+    bg.addColorStop(0, '#1e293b');
+    bg.addColorStop(1, '#0f172a');
+    roundRect(ctx, 0, 0, size, size, r, bg);
+
+    // Yellow accent circle
+    const cx = size / 2, cy = size * 0.42, cr = size * 0.28;
+    const grd = ctx.createRadialGradient(cx, cy, cr * 0.1, cx, cy, cr);
+    grd.addColorStop(0, '#fde68a');
+    grd.addColorStop(1, '#f59e0b');
+    ctx.beginPath();
+    ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+    ctx.fillStyle = grd;
+    ctx.fill();
+
+    // Taxi emoji text
+    ctx.font = `${size * 0.32}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🚕', cx, cy);
+
+    // "TRACKER" label
+    ctx.font = `bold ${size * 0.11}px -apple-system, Arial`;
+    ctx.fillStyle = '#94a3b8';
+    ctx.letterSpacing = size * 0.015 + 'px';
+    ctx.fillText('TRACKER', cx, size * 0.82);
+}
+
+function roundRect(ctx, x, y, w, h, r, fill) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.fill();
+}
+
+function generate() {
+    const c192 = document.getElementById('c192');
+    const c512 = document.getElementById('c512');
+    drawIcon(c192, 192);
+    drawIcon(c512, 512);
+
+    const a192 = document.createElement('a');
+    a192.download = 'icon-192.png';
+    a192.href = c192.toDataURL('image/png');
+    a192.click();
+
+    setTimeout(() => {
+        const a512 = document.createElement('a');
+        a512.download = 'icon-512.png';
+        a512.href = c512.toDataURL('image/png');
+        a512.click();
+    }, 500);
+}
+
+// Auto-generate on load
+window.onload = () => generate();
+</script>
+</body>
+</html>

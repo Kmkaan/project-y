@@ -1,5 +1,5 @@
-const CACHE = 'tracker-v8';
-const FILES = ['./index.html', './manifest.json', './sw.js'];
+const CACHE = 'tracker-v9';
+const FILES = ['./index.html', './manifest.json', './sw.js', './icon.svg'];
 
 self.addEventListener('install', e => {
     e.waitUntil(

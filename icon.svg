@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <radialGradient id="circle" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </radialGradient>
+    <clipPath id="round">
+      <rect width="512" height="512" rx="112" ry="112"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" ry="112" fill="url(#bg)"/>
+
+  <!-- Yellow glow circle -->
+  <circle cx="256" cy="210" r="148" fill="url(#circle)" opacity="0.18"/>
+
+  <!-- Taxi emoji area circle -->
+  <circle cx="256" cy="210" r="118" fill="#f59e0b" opacity="0.12"/>
+
+  <!-- Taxi symbol: car body -->
+  <rect x="128" y="230" width="256" height="90" rx="18" fill="#f6e05e"/>
+  <!-- Roof -->
+  <rect x="168" y="172" width="176" height="68" rx="14" fill="#f6e05e"/>
+  <!-- Windshield -->
+  <rect x="186" y="182" width="68" height="50" rx="8" fill="#0ea5e9" opacity="0.7"/>
+  <rect x="258" y="182" width="68" height="50" rx="8" fill="#0ea5e9" opacity="0.7"/>
+  <!-- Wheels -->
+  <circle cx="182" cy="322" r="34" fill="#1e293b"/>
+  <circle cx="182" cy="322" r="18" fill="#475569"/>
+  <circle cx="330" cy="322" r="34" fill="#1e293b"/>
+  <circle cx="330" cy="322" r="18" fill="#475569"/>
+  <!-- Taxi light on roof -->
+  <rect x="226" y="152" width="60" height="24" rx="8" fill="#fbbf24"/>
+  <!-- Stripe -->
+  <rect x="128" y="258" width="256" height="12" fill="#1a202c" opacity="0.3"/>
+
+  <!-- TRACKER label -->
+  <text x="256" y="420" font-family="-apple-system, Arial, sans-serif" font-size="52" font-weight="800"
+        fill="#94a3b8" text-anchor="middle" letter-spacing="6">TRACKER</text>
+</svg>
