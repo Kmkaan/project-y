@@ -778,6 +778,7 @@ renderChart();
 renderFuel();
 renderGoal();
 autoSyncTaxiToBudget();
+autoSyncFuelToBudget();
 
 // ── Clock ──────────────────────────────────────────────────────
 function updateClock() {
@@ -1052,6 +1053,7 @@ function addFuel() {
     document.getElementById('fuel-date').value   = todayStr();
     if (fuelPricePerL > 0) document.getElementById('fuel-price-l').value = fuelPricePerL;
     renderFuel();
+    autoSyncFuelToBudget();
 }
 
 function deleteFuel(id) {
@@ -1059,6 +1061,7 @@ function deleteFuel(id) {
     fuelEntries = fuelEntries.filter(e => e.id !== id);
     localStorage.setItem('fuel_entries', JSON.stringify(fuelEntries));
     renderFuel();
+    autoSyncFuelToBudget();
 }
 
 function renderFuel() {
@@ -1120,6 +1123,43 @@ function autoSyncTaxiToBudget() {
 
     const before = budgetEntries.length;
     budgetEntries = budgetEntries.filter(e => !e.autoSync || (dateMap[e.syncDate] && dateMap[e.syncDate] > 0));
+    if (budgetEntries.length !== before) changed = true;
+
+    if (changed) {
+        budgetEntries.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+        localStorage.setItem('budget_entries', JSON.stringify(budgetEntries));
+        renderBudget();
+    }
+}
+
+// ── Auto-sync fuel → budget ────────────────────────────────────
+function autoSyncFuelToBudget() {
+    const today = todayStr();
+
+    const dateMap = {};
+    fuelEntries.forEach(e => {
+        if (e.date < today) dateMap[e.date] = (dateMap[e.date] || 0) + e.cost;
+    });
+
+    let changed = false;
+
+    Object.entries(dateMap).forEach(([date, total]) => {
+        if (total <= 0) return;
+        const existing = budgetEntries.find(e => e.fuelSync && e.syncDate === date);
+        if (existing) {
+            if (Math.abs(existing.amount - total) > 0.001) { existing.amount = total; changed = true; }
+        } else {
+            budgetEntries.push({
+                id: Date.now() + (Math.random() * 999 | 0),
+                date, type: 'expense', cat: 'Fuel', amount: total,
+                note: 'Auto — fuel fill', autoSync: true, fuelSync: true, syncDate: date
+            });
+            changed = true;
+        }
+    });
+
+    const before = budgetEntries.length;
+    budgetEntries = budgetEntries.filter(e => !e.fuelSync || (dateMap[e.syncDate] && dateMap[e.syncDate] > 0));
     if (budgetEntries.length !== before) changed = true;
 
     if (changed) {
