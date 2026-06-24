@@ -431,17 +431,28 @@
         </div>
     </div>
 
-    <!-- Earnings chart -->
-    <div class="chart-card">
-        <div class="chart-header">
-            <span class="chart-title">Earnings Chart</span>
-            <div class="chart-toggle">
-                <button class="chart-tab active" data-chart="daily"  onclick="showChart('daily')">Daily</button>
-                <button class="chart-tab"        data-chart="weekly" onclick="showChart('weekly')">Weekly</button>
+    <div class="section-title">🚗 Trip Log</div>
+    <div class="form-card">
+        <div class="form-title">Log a Trip</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="trip-date">Date</label>
+                <input type="date" id="trip-date">
+            </div>
+            <div class="form-group">
+                <label for="trip-amount">Amount (RF)</label>
+                <input type="number" id="trip-amount" placeholder="0" min="0" step="0.01" inputmode="decimal">
             </div>
         </div>
-        <div class="bar-chart" id="bar-chart"></div>
+        <div class="form-group" style="margin-bottom:0.6rem">
+            <label for="trip-note">Destination / Note (optional)</label>
+            <input type="text" id="trip-note" placeholder="e.g. Airport, School run…">
+        </div>
+        <button class="btn btn-green" onclick="addTrip()">+ Log Trip</button>
     </div>
+    <div class="entry-list" id="trip-list"></div>
+
+    <div style="height:1.1rem"></div>
 
     <div class="form-card">
         <div class="form-title">Add Earnings</div>
@@ -467,26 +478,17 @@
 
     <div style="height:1.1rem"></div>
 
-    <div class="section-title">🚗 Trip Log</div>
-    <div class="form-card">
-        <div class="form-title">Log a Trip</div>
-        <div class="form-row">
-            <div class="form-group">
-                <label for="trip-date">Date</label>
-                <input type="date" id="trip-date">
-            </div>
-            <div class="form-group">
-                <label for="trip-amount">Amount (RF)</label>
-                <input type="number" id="trip-amount" placeholder="0" min="0" step="0.01" inputmode="decimal">
+    <!-- Earnings chart -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <span class="chart-title">Earnings Chart</span>
+            <div class="chart-toggle">
+                <button class="chart-tab active" data-chart="daily"  onclick="showChart('daily')">Daily</button>
+                <button class="chart-tab"        data-chart="weekly" onclick="showChart('weekly')">Weekly</button>
             </div>
         </div>
-        <div class="form-group" style="margin-bottom:0.6rem">
-            <label for="trip-note">Destination / Note (optional)</label>
-            <input type="text" id="trip-note" placeholder="e.g. Airport, School run…">
-        </div>
-        <button class="btn btn-green" onclick="addTrip()">+ Log Trip</button>
+        <div class="bar-chart" id="bar-chart"></div>
     </div>
-    <div class="entry-list" id="trip-list"></div>
 </div>
 
 <!-- ════════════ BUDGET TAB ════════════ -->
