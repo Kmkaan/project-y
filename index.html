@@ -495,26 +495,39 @@
 <div id="tab-budget" class="tab-content">
 
     <div class="balance-card">
-        <div class="balance-label">Net Balance</div>
+        <div class="balance-label">Available Cash</div>
         <div class="balance-value bal-pos" id="budget-balance">RF 0.00</div>
         <div class="balance-row">
-            <div class="bal-sub">
-                <div class="bal-sub-label">Income</div>
-                <div class="bal-sub-value" style="color:#68d391" id="b-income">RF 0.00</div>
-            </div>
-            <div class="bal-sub">
-                <div class="bal-sub-label">Expenses</div>
-                <div class="bal-sub-value" style="color:#fc8181" id="b-expenses">RF 0.00</div>
-            </div>
             <div class="bal-sub">
                 <div class="bal-sub-label">Savings</div>
                 <div class="bal-sub-value" style="color:#63b3ed" id="b-savings">RF 0.00</div>
             </div>
+            <div class="bal-sub">
+                <div class="bal-sub-label">Debt</div>
+                <div class="bal-sub-value" style="color:#fc8181" id="b-debt">RF 0.00</div>
+            </div>
+            <div class="bal-sub">
+                <div class="bal-sub-label">Net Worth</div>
+                <div class="bal-sub-value" style="color:#68d391" id="b-networth">RF 0.00</div>
+            </div>
         </div>
+    </div>
+
+    <!-- Savings accounts breakdown -->
+    <div id="savings-breakdown" style="display:none">
+        <div class="section-title">🏦 Savings Accounts</div>
+        <div class="entry-list" id="savings-list" style="margin-bottom:1rem"></div>
+    </div>
+
+    <!-- Loans breakdown -->
+    <div id="loans-breakdown" style="display:none">
+        <div class="section-title">💳 Loans</div>
+        <div class="entry-list" id="loans-list" style="margin-bottom:1rem"></div>
     </div>
 
     <div class="form-card">
         <div class="form-title">Add Entry</div>
+
         <div class="type-toggle">
             <button class="type-btn sel-green" id="btn-income"     onclick="setType('income')">+ Income</button>
             <button class="type-btn"           id="btn-savings"    onclick="setType('savings')">🏦 Save</button>
@@ -523,6 +536,11 @@
             <button class="type-btn"           id="btn-expense"    onclick="setType('expense')">− Expense</button>
             <button class="type-btn"           id="btn-withdrawal" onclick="setType('withdrawal')">↩ Withdraw</button>
         </div>
+        <div class="type-toggle">
+            <button class="type-btn"           id="btn-loan"       onclick="setType('loan')">💳 Loan</button>
+            <button class="type-btn"           id="btn-repayment"  onclick="setType('repayment')">💸 Repay Loan</button>
+        </div>
+
         <div class="form-row">
             <div class="form-group">
                 <label for="budget-date">Date</label>
@@ -533,28 +551,44 @@
                 <input type="number" id="budget-amount" placeholder="0" min="0" step="0.01" inputmode="decimal">
             </div>
         </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label for="budget-cat">Category</label>
-                <select id="budget-cat">
-                    <option>General</option>
-                    <option>Food</option>
-                    <option>Fuel</option>
-                    <option>Rent</option>
-                    <option>Utilities</option>
-                    <option>Transport</option>
-                    <option>Car Maintenance</option>
-                    <option>Clothing</option>
-                    <option>Health</option>
-                    <option>Entertainment</option>
-                    <option>Other</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="budget-note">Note (optional)</label>
-                <input type="text" id="budget-note" placeholder="Description">
-            </div>
+
+        <!-- Category (income / expense only) -->
+        <div class="form-group" id="cat-group" style="margin-bottom:0.6rem">
+            <label for="budget-cat">Category</label>
+            <select id="budget-cat">
+                <option>General</option>
+                <option>Food</option>
+                <option>Fuel</option>
+                <option>Rent</option>
+                <option>Utilities</option>
+                <option>Transport</option>
+                <option>Car Maintenance</option>
+                <option>Clothing</option>
+                <option>Health</option>
+                <option>Entertainment</option>
+                <option>Other</option>
+            </select>
         </div>
+
+        <!-- Savings account (savings / withdrawal only) -->
+        <div class="form-group" id="acct-group" style="display:none; margin-bottom:0.6rem">
+            <label for="budget-account">Savings Account</label>
+            <input type="text" id="budget-account" placeholder="e.g. Emergency Fund, House…" list="acct-list" autocomplete="off">
+            <datalist id="acct-list"></datalist>
+        </div>
+
+        <!-- Loan name (loan / repayment only) -->
+        <div class="form-group" id="loan-name-group" style="display:none; margin-bottom:0.6rem">
+            <label for="budget-loan-name">Loan Name</label>
+            <input type="text" id="budget-loan-name" placeholder="e.g. Bank Loan, Personal…" list="loan-list" autocomplete="off">
+            <datalist id="loan-list"></datalist>
+        </div>
+
+        <div class="form-group" style="margin-bottom:0.6rem">
+            <label for="budget-note">Note (optional)</label>
+            <input type="text" id="budget-note" placeholder="Description">
+        </div>
+
         <button class="btn btn-green" id="budget-submit" onclick="addBudgetEntry()">+ Add Income</button>
     </div>
 
@@ -827,35 +861,58 @@ function renderTrips() {
 // ── Budget ─────────────────────────────────────────────────────
 const TYPE_CFG = {
     income:     { sel: 'sel-green',  btnText: '+ Add Income',            btnClass: 'btn-green', amtClass: 'amt-income',  sign: '+' },
-    savings:    { sel: 'sel-blue',   btnText: '🏦 Add to Savings',       btnClass: 'btn-dark',  amtClass: 'amt-saving',  sign: '+' },
+    savings:    { sel: 'sel-blue',   btnText: '🏦 Add to Savings',       btnClass: 'btn-dark',  amtClass: 'amt-saving',  sign: '↓' },
     expense:    { sel: 'sel-red',    btnText: '− Add Expense',           btnClass: 'btn-red',   amtClass: 'amt-expense', sign: '-' },
-    withdrawal: { sel: 'sel-orange', btnText: '↩ Withdraw from Savings', btnClass: 'btn-red',   amtClass: 'amt-expense', sign: '-' },
+    withdrawal: { sel: 'sel-orange', btnText: '↩ Withdraw from Savings', btnClass: 'btn-dark',  amtClass: 'amt-saving',  sign: '↑' },
+    loan:       { sel: 'sel-orange', btnText: '💳 Add Loan',             btnClass: 'btn-dark',  amtClass: 'amt-expense', sign: '+' },
+    repayment:  { sel: 'sel-green',  btnText: '💸 Repay Loan',           btnClass: 'btn-green', amtClass: 'amt-income',  sign: '-' },
 };
+
+const BUDGET_TYPES = ['income','savings','expense','withdrawal','loan','repayment'];
 
 function setType(type) {
     budgetType = type;
-    ['income','savings','expense','withdrawal'].forEach(t => {
-        document.getElementById('btn-' + t).className =
-            'type-btn' + (t === type ? ' ' + TYPE_CFG[t].sel : '');
+    BUDGET_TYPES.forEach(t => {
+        const el = document.getElementById('btn-' + t);
+        if (el) el.className = 'type-btn' + (t === type ? ' ' + TYPE_CFG[t].sel : '');
     });
     const cfg = TYPE_CFG[type];
     const sub = document.getElementById('budget-submit');
     sub.textContent = cfg.btnText;
     sub.className   = 'btn ' + cfg.btnClass;
-    document.getElementById('budget-cat').disabled = (type === 'savings' || type === 'withdrawal');
+
+    const isSavings = type === 'savings' || type === 'withdrawal';
+    const isLoan    = type === 'loan'    || type === 'repayment';
+    const isCat     = type === 'income'  || type === 'expense';
+
+    document.getElementById('cat-group').style.display       = isCat     ? 'flex' : 'none';
+    document.getElementById('acct-group').style.display      = isSavings ? 'flex' : 'none';
+    document.getElementById('loan-name-group').style.display = isLoan    ? 'flex' : 'none';
 }
 
 function addBudgetEntry() {
-    const date   = document.getElementById('budget-date').value;
-    const amount = parseFloat(document.getElementById('budget-amount').value);
-    const cat    = document.getElementById('budget-cat').value;
-    const note   = document.getElementById('budget-note').value.trim();
+    const date      = document.getElementById('budget-date').value;
+    const amount    = parseFloat(document.getElementById('budget-amount').value);
+    const cat       = document.getElementById('budget-cat').value;
+    const account   = document.getElementById('budget-account').value.trim() || 'General';
+    const loanName  = document.getElementById('budget-loan-name').value.trim() || 'Loan';
+    const note      = document.getElementById('budget-note').value.trim();
+
     if (!date || !amount || amount <= 0) { alert('Enter a valid date and amount.'); return; }
-    budgetEntries.unshift({ id: Date.now(), date, type: budgetType, cat, amount, note });
+
+    const entry = { id: Date.now(), date, type: budgetType, amount, note };
+    if (budgetType === 'income'  || budgetType === 'expense')    entry.cat      = cat;
+    if (budgetType === 'savings' || budgetType === 'withdrawal') entry.account  = account;
+    if (budgetType === 'loan'    || budgetType === 'repayment')  entry.loanName = loanName;
+
+    budgetEntries.unshift(entry);
     localStorage.setItem('budget_entries', JSON.stringify(budgetEntries));
-    document.getElementById('budget-amount').value = '';
-    document.getElementById('budget-note').value   = '';
-    document.getElementById('budget-date').value   = todayStr();
+
+    document.getElementById('budget-amount').value    = '';
+    document.getElementById('budget-note').value      = '';
+    document.getElementById('budget-account').value   = '';
+    document.getElementById('budget-loan-name').value = '';
+    document.getElementById('budget-date').value      = todayStr();
     renderBudget();
 }
 
@@ -867,29 +924,102 @@ function deleteBudget(id) {
 }
 
 function renderBudget() {
-    let income = 0, expenses = 0, savings = 0;
-    budgetEntries.forEach(e => {
-        if (e.type === 'income')     income   += e.amount;
-        if (e.type === 'expense')    expenses += e.amount;
-        if (e.type === 'savings')    savings  += e.amount;
-        if (e.type === 'withdrawal') savings  -= e.amount;
-    });
-    const balance = income - expenses;
-    const balEl = document.getElementById('budget-balance');
-    balEl.textContent = fmt(balance);
-    balEl.className   = 'balance-value ' + (balance >= 0 ? 'bal-pos' : 'bal-neg');
-    document.getElementById('b-income').textContent   = fmt(income);
-    document.getElementById('b-expenses').textContent = fmt(expenses);
-    document.getElementById('b-savings').textContent  = fmt(savings);
+    let cash = 0, totalSavings = 0, totalDebt = 0;
+    const savingsAccts = {}, loansMap = {};
 
+    budgetEntries.forEach(e => {
+        const a = e.amount;
+        switch (e.type) {
+            case 'income':
+                cash += a; break;
+            case 'expense':
+                cash -= a; break;
+            case 'savings': {
+                cash -= a; totalSavings += a;
+                const k = e.account || 'General';
+                savingsAccts[k] = (savingsAccts[k] || 0) + a;
+                break;
+            }
+            case 'withdrawal': {
+                cash += a; totalSavings -= a;
+                const k = e.account || 'General';
+                savingsAccts[k] = (savingsAccts[k] || 0) - a;
+                break;
+            }
+            case 'loan': {
+                cash += a; totalDebt += a;
+                const k = e.loanName || 'Loan';
+                loansMap[k] = (loansMap[k] || 0) + a;
+                break;
+            }
+            case 'repayment': {
+                cash -= a; totalDebt -= a;
+                const k = e.loanName || 'Loan';
+                loansMap[k] = (loansMap[k] || 0) - a;
+                break;
+            }
+        }
+    });
+
+    const netWorth = cash + totalSavings - totalDebt;
+
+    const balEl = document.getElementById('budget-balance');
+    balEl.textContent = fmt(cash);
+    balEl.className   = 'balance-value ' + (cash >= 0 ? 'bal-pos' : 'bal-neg');
+
+    document.getElementById('b-savings').textContent  = fmt(totalSavings);
+    document.getElementById('b-debt').textContent     = fmt(totalDebt);
+    const nwEl = document.getElementById('b-networth');
+    nwEl.textContent = fmt(netWorth);
+    nwEl.style.color = netWorth >= 0 ? '#68d391' : '#fc8181';
+
+    // Savings breakdown
+    const savAccts = Object.entries(savingsAccts).filter(([,v]) => v !== 0);
+    const sbWrap = document.getElementById('savings-breakdown');
+    sbWrap.style.display = savAccts.length ? 'block' : 'none';
+    document.getElementById('savings-list').innerHTML = savAccts.map(([name, bal]) => `
+        <div class="entry-item">
+            <div class="entry-meta"><div class="entry-note">${name}</div></div>
+            <div class="entry-right">
+                <span class="entry-amount amt-saving">${fmt(bal)}</span>
+            </div>
+        </div>`).join('');
+
+    // Loans breakdown
+    const loanEntries = Object.entries(loansMap).filter(([,v]) => v > 0);
+    const lbWrap = document.getElementById('loans-breakdown');
+    lbWrap.style.display = loanEntries.length ? 'block' : 'none';
+    document.getElementById('loans-list').innerHTML = loanEntries.map(([name, bal]) => `
+        <div class="entry-item">
+            <div class="entry-meta"><div class="entry-note">${name}</div></div>
+            <div class="entry-right">
+                <span class="entry-amount amt-expense">${fmt(bal)} owed</span>
+            </div>
+        </div>`).join('');
+
+    // Update datalists for autocomplete
+    const acctNames = [...new Set(budgetEntries
+        .filter(e => e.type === 'savings' || e.type === 'withdrawal')
+        .map(e => e.account || 'General'))];
+    document.getElementById('acct-list').innerHTML = acctNames.map(n => `<option value="${n}">`).join('');
+
+    const loanNames = [...new Set(budgetEntries
+        .filter(e => e.type === 'loan' || e.type === 'repayment')
+        .map(e => e.loanName || 'Loan'))];
+    document.getElementById('loan-list').innerHTML = loanNames.map(n => `<option value="${n}">`).join('');
+
+    // Transactions list
     const list = document.getElementById('budget-list');
     if (!budgetEntries.length) {
         list.innerHTML = '<div class="empty-state">No entries yet — add your first transaction above.</div>';
         return;
     }
     list.innerHTML = budgetEntries.map(e => {
-        const cfg   = TYPE_CFG[e.type] || TYPE_CFG.income;
-        const label = (e.type === 'savings' || e.type === 'withdrawal') ? e.type : e.cat;
+        const cfg = TYPE_CFG[e.type] || TYPE_CFG.income;
+        const label =
+            (e.type === 'savings' || e.type === 'withdrawal') ? (e.account  || 'General') :
+            (e.type === 'loan'    || e.type === 'repayment')  ? (e.loanName || 'Loan')    :
+            (e.cat || 'General');
         return `
             <div class="entry-item">
                 <div class="entry-meta">
