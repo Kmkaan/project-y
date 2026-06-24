@@ -66,6 +66,7 @@
             background: var(--header-bg);
             color: #fff;
             padding: 0.8rem 1rem;
+            padding-top: max(0.8rem, calc(env(safe-area-inset-top, 0px) + 0.4rem));
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -136,9 +137,13 @@
             margin-bottom: 0.3rem; white-space: nowrap;
         }
         .card-value {
-            font-size: 1rem; font-weight: 700;
+            font-size: 1.05rem; font-weight: 800;
             white-space: nowrap; overflow: hidden;
-            text-overflow: ellipsis;
+            text-overflow: ellipsis; letter-spacing: -0.01em;
+        }
+        .card-unit {
+            font-size: 0.58rem; font-weight: 600;
+            color: var(--text-muted); margin-top: 0.1rem;
         }
         .green  { color: #38a169; }
         .blue   { color: #3182ce; }
@@ -342,14 +347,21 @@
             font-size: 1rem !important; padding: 0 !important;
         }
 
-        @media (max-width: 380px) {
-            .card-value     { font-size: 0.82rem; }
+        @media (max-width: 400px) {
+            .card-value     { font-size: 0.9rem; }
             .card-label     { font-size: 0.58rem; }
-            .card           { padding: 0.6rem 0.45rem; }
-            .balance-value  { font-size: 1.65rem; }
-            .bal-sub-value  { font-size: 0.78rem; }
-            #clock-time     { font-size: 1.05rem; }
-            .tab-btn        { font-size: 0.72rem; padding: 0.65rem 0.3rem; }
+            .card           { padding: 0.65rem 0.5rem; }
+        }
+        @media (max-width: 360px) {
+            .card-value     { font-size: 0.78rem; }
+            .card-label     { font-size: 0.55rem; }
+            .card           { padding: 0.55rem 0.35rem; }
+            .balance-value  { font-size: 1.55rem; }
+            .bal-sub-value  { font-size: 0.75rem; }
+            #clock-time     { font-size: 1rem; }
+            .tab-btn        { font-size: 0.7rem; padding: 0.6rem 0.25rem; }
+            .tab-content    { padding: 0.75rem; }
+            .summary-grid   { gap: 0.35rem; }
         }
     </style>
 </head>
@@ -383,15 +395,18 @@
     <div class="summary-grid">
         <div class="card">
             <div class="card-label">Today</div>
-            <div class="card-value green"  id="taxi-today">RF 0</div>
+            <div class="card-value green"  id="taxi-today">0.00</div>
+            <div class="card-unit">RF</div>
         </div>
         <div class="card">
             <div class="card-label">This Week</div>
-            <div class="card-value blue"   id="taxi-week">RF 0</div>
+            <div class="card-value blue"   id="taxi-week">0.00</div>
+            <div class="card-unit">RF</div>
         </div>
         <div class="card">
             <div class="card-label">This Month</div>
-            <div class="card-value orange" id="taxi-month">RF 0</div>
+            <div class="card-value orange" id="taxi-month">0.00</div>
+            <div class="card-unit">RF</div>
         </div>
     </div>
 
@@ -542,6 +557,10 @@ function todayStr() {
 
 function fmt(n) {
     return 'RF ' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function fmtNum(n) {
+    return Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 function fmtShort(n) {
@@ -720,9 +739,9 @@ function renderTaxi() {
         if (e.date >= ws)          week  += e.amount;
         if (e.date.startsWith(ms)) month += e.amount;
     });
-    document.getElementById('taxi-today').textContent = fmt(day);
-    document.getElementById('taxi-week').textContent  = fmt(week);
-    document.getElementById('taxi-month').textContent = fmt(month);
+    document.getElementById('taxi-today').textContent = fmtNum(day);
+    document.getElementById('taxi-week').textContent  = fmtNum(week);
+    document.getElementById('taxi-month').textContent = fmtNum(month);
 
     const list = document.getElementById('taxi-list');
     if (!taxiEntries.length) {
