@@ -437,8 +437,34 @@
         <button class="btn btn-dark" onclick="addTaxiEntry()">+ Add Earnings</button>
     </div>
 
-    <div class="section-title">History</div>
+    <div class="section-title">Earnings History</div>
     <div class="entry-list" id="taxi-list"></div>
+
+    <div style="height:1.2rem"></div>
+
+    <!-- Trip Log -->
+    <div class="section-title">🚗 Trip Log</div>
+
+    <div class="form-card">
+        <div class="form-title">Log a Trip</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="trip-date">Date</label>
+                <input type="date" id="trip-date">
+            </div>
+            <div class="form-group">
+                <label for="trip-amount">Amount (RF)</label>
+                <input type="number" id="trip-amount" placeholder="0.00" min="0" step="0.01">
+            </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0.65rem">
+            <label for="trip-note">Destination / Note (optional)</label>
+            <input type="text" id="trip-note" placeholder="e.g. Airport, School run…">
+        </div>
+        <button class="btn btn-green" onclick="addTrip()">+ Log Trip</button>
+    </div>
+
+    <div class="entry-list" id="trip-list"></div>
 </div>
 
 <!-- ════════════ BUDGET TAB ════════════ -->
@@ -517,17 +543,20 @@
 <script>
 // ── State ────────────────────────────────────────────────────
 let taxiEntries   = JSON.parse(localStorage.getItem('taxi_entries')   || '[]');
+let taxiTrips     = JSON.parse(localStorage.getItem('taxi_trips')     || '[]');
 let budgetEntries = JSON.parse(localStorage.getItem('budget_entries') || '[]');
 let budgetType    = 'income';
 
 // ── Boot ─────────────────────────────────────────────────────
 document.getElementById('taxi-date').value   = todayStr();
+document.getElementById('trip-date').value   = todayStr();
 document.getElementById('budget-date').value = todayStr();
 
 // Restore dark mode
 if (localStorage.getItem('dark_mode') === '1') applyDark(true);
 
 renderTaxi();
+renderTrips();
 renderBudget();
 
 // Register service worker
@@ -637,7 +666,8 @@ function renderTaxi() {
     const ms = thisMonth();
     let day = 0, week = 0, month = 0;
 
-    taxiEntries.forEach(e => {
+    const allTaxi = [...taxiEntries, ...taxiTrips];
+    allTaxi.forEach(e => {
         if (e.date === t)           day   += e.amount;
         if (e.date >= ws)           week  += e.amount;
         if (e.date.startsWith(ms))  month += e.amount;
@@ -662,6 +692,51 @@ function renderTaxi() {
             <div class="entry-right">
                 <span class="entry-amount amt-taxi">${fmt(e.amount)}</span>
                 <button class="del-btn" onclick="deleteTaxi(${e.id})">✕</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ── Trips ─────────────────────────────────────────────────────
+function addTrip() {
+    const date   = document.getElementById('trip-date').value;
+    const amount = parseFloat(document.getElementById('trip-amount').value);
+    const note   = document.getElementById('trip-note').value.trim();
+
+    if (!date || !amount || amount <= 0) { alert('Enter a valid date and amount.'); return; }
+
+    taxiTrips.unshift({ id: Date.now(), date, amount, note });
+    localStorage.setItem('taxi_trips', JSON.stringify(taxiTrips));
+    document.getElementById('trip-amount').value = '';
+    document.getElementById('trip-note').value   = '';
+    document.getElementById('trip-date').value   = todayStr();
+    renderTrips();
+    renderTaxi();
+}
+
+function deleteTrip(id) {
+    if (!confirm('Delete this trip?')) return;
+    taxiTrips = taxiTrips.filter(e => e.id !== id);
+    localStorage.setItem('taxi_trips', JSON.stringify(taxiTrips));
+    renderTrips();
+    renderTaxi();
+}
+
+function renderTrips() {
+    const list = document.getElementById('trip-list');
+    if (!taxiTrips.length) {
+        list.innerHTML = '<div class="empty-state">No trips logged yet — add your first trip above.</div>';
+        return;
+    }
+    list.innerHTML = taxiTrips.map(e => `
+        <div class="entry-item" style="border-left:3px solid #38a169">
+            <div class="entry-meta">
+                <div class="entry-date">${fmtDate(e.date)}</div>
+                ${e.note ? `<div class="entry-note">${e.note}</div>` : '<div class="entry-note" style="color:var(--text-muted)">Trip</div>'}
+            </div>
+            <div class="entry-right">
+                <span class="entry-amount amt-income">${fmt(e.amount)}</span>
+                <button class="del-btn" onclick="deleteTrip(${e.id})">✕</button>
             </div>
         </div>
     `).join('');
