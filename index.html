@@ -668,19 +668,25 @@
                 <input type="date" id="fuel-date">
             </div>
             <div class="form-group">
-                <label for="fuel-cost">Cost (RF)</label>
-                <input type="number" id="fuel-cost" placeholder="0" min="0" step="0.01" inputmode="decimal">
+                <label for="fuel-price-l">Price per Liter (RF) <span style="color:var(--text-muted);font-weight:400">— saved</span></label>
+                <input type="number" id="fuel-price-l" placeholder="e.g. 12.50" min="0" step="0.01" inputmode="decimal"
+                       oninput="saveFuelPrice(); calcFuelLiters()">
             </div>
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label for="fuel-liters">Liters</label>
-                <input type="number" id="fuel-liters" placeholder="0" min="0" step="0.1" inputmode="decimal">
+                <label for="fuel-cost">Total Cost (RF)</label>
+                <input type="number" id="fuel-cost" placeholder="0" min="0" step="0.01" inputmode="decimal"
+                       oninput="calcFuelLiters()">
             </div>
             <div class="form-group">
-                <label for="fuel-note">Note (optional)</label>
-                <input type="text" id="fuel-note" placeholder="Station, etc.">
+                <label for="fuel-liters">Liters <span style="color:var(--text-muted);font-weight:400">(auto)</span></label>
+                <input type="number" id="fuel-liters" placeholder="auto" min="0" step="0.01" inputmode="decimal">
             </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0.6rem">
+            <label for="fuel-note">Note (optional)</label>
+            <input type="text" id="fuel-note" placeholder="Station, etc.">
         </div>
         <button class="btn btn-dark" onclick="addFuel()">⛽ Log Fill</button>
     </div>
@@ -714,6 +720,7 @@ let taxiEntries   = JSON.parse(localStorage.getItem('taxi_entries')   || '[]');
 let taxiTrips     = JSON.parse(localStorage.getItem('taxi_trips')     || '[]');
 let budgetEntries = JSON.parse(localStorage.getItem('budget_entries') || '[]');
 let fuelEntries   = JSON.parse(localStorage.getItem('fuel_entries')   || '[]');
+let fuelPricePerL = parseFloat(localStorage.getItem('fuel_price_per_l') || '0');
 let budgetType    = 'income';
 let activeChart   = 'daily';
 let dailyGoal     = parseFloat(localStorage.getItem('daily_goal') || '0');
@@ -760,6 +767,7 @@ document.getElementById('taxi-date').value   = todayStr();
 document.getElementById('trip-date').value   = todayStr();
 document.getElementById('budget-date').value = todayStr();
 document.getElementById('fuel-date').value   = todayStr();
+if (fuelPricePerL > 0) document.getElementById('fuel-price-l').value = fuelPricePerL;
 
 if (localStorage.getItem('dark_mode') === '1') applyDark(true);
 
@@ -1014,6 +1022,22 @@ function renderTrips() {
 }
 
 // ── Fuel ───────────────────────────────────────────────────────
+function saveFuelPrice() {
+    const p = parseFloat(document.getElementById('fuel-price-l').value) || 0;
+    fuelPricePerL = p;
+    localStorage.setItem('fuel_price_per_l', p);
+}
+
+function calcFuelLiters() {
+    const cost  = parseFloat(document.getElementById('fuel-cost').value) || 0;
+    const price = parseFloat(document.getElementById('fuel-price-l').value) || 0;
+    if (cost > 0 && price > 0) {
+        document.getElementById('fuel-liters').value = (cost / price).toFixed(2);
+    } else {
+        document.getElementById('fuel-liters').value = '';
+    }
+}
+
 function addFuel() {
     const date   = document.getElementById('fuel-date').value;
     const cost   = parseFloat(document.getElementById('fuel-cost').value);
@@ -1026,6 +1050,7 @@ function addFuel() {
     document.getElementById('fuel-liters').value = '';
     document.getElementById('fuel-note').value   = '';
     document.getElementById('fuel-date').value   = todayStr();
+    if (fuelPricePerL > 0) document.getElementById('fuel-price-l').value = fuelPricePerL;
     renderFuel();
 }
 
