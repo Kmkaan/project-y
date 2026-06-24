@@ -947,7 +947,7 @@ function renderBudget() {
                 break;
             }
             case 'loan': {
-                cash += a; totalDebt += a;
+                totalDebt += a;
                 const k = e.loanName || 'Loan';
                 loansMap[k] = (loansMap[k] || 0) + a;
                 break;
