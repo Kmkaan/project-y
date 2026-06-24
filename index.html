@@ -657,6 +657,7 @@ renderTaxi();
 renderTrips();
 renderBudget();
 renderChart();
+autoSyncTaxiToBudget();
 
 // ── Clock ──────────────────────────────────────────────────────
 function updateClock() {
@@ -780,14 +781,14 @@ function addTaxiEntry() {
     document.getElementById('taxi-amount').value = '';
     document.getElementById('taxi-note').value   = '';
     document.getElementById('taxi-date').value   = todayStr();
-    renderTaxi(); renderChart();
+    renderTaxi(); renderChart(); autoSyncTaxiToBudget();
 }
 
 function deleteTaxi(id) {
     if (!confirm('Delete this entry?')) return;
     taxiEntries = taxiEntries.filter(e => e.id !== id);
     localStorage.setItem('taxi_entries', JSON.stringify(taxiEntries));
-    renderTaxi(); renderChart();
+    renderTaxi(); renderChart(); autoSyncTaxiToBudget();
 }
 
 function renderTaxi() {
@@ -831,14 +832,14 @@ function addTrip() {
     document.getElementById('trip-amount').value = '';
     document.getElementById('trip-note').value   = '';
     document.getElementById('trip-date').value   = todayStr();
-    renderTrips(); renderTaxi(); renderChart();
+    renderTrips(); renderTaxi(); renderChart(); autoSyncTaxiToBudget();
 }
 
 function deleteTrip(id) {
     if (!confirm('Delete this trip?')) return;
     taxiTrips = taxiTrips.filter(e => e.id !== id);
     localStorage.setItem('taxi_trips', JSON.stringify(taxiTrips));
-    renderTrips(); renderTaxi(); renderChart();
+    renderTrips(); renderTaxi(); renderChart(); autoSyncTaxiToBudget();
 }
 
 function renderTrips() {
@@ -858,6 +859,55 @@ function renderTrips() {
                 <button class="del-btn" onclick="deleteTrip(${e.id})">✕</button>
             </div>
         </div>`).join('');
+}
+
+// ── Auto-sync taxi → budget ────────────────────────────────────
+function autoSyncTaxiToBudget() {
+    const today = todayStr();
+    const all   = [...taxiEntries, ...taxiTrips];
+
+    // Sum earnings per past date
+    const dateMap = {};
+    all.forEach(e => {
+        if (e.date < today) dateMap[e.date] = (dateMap[e.date] || 0) + e.amount;
+    });
+
+    let changed = false;
+
+    // Upsert a budget income entry for each past date with earnings
+    Object.entries(dateMap).forEach(([date, total]) => {
+        if (total <= 0) return;
+        const existing = budgetEntries.find(e => e.autoSync && e.syncDate === date);
+        if (existing) {
+            if (Math.abs(existing.amount - total) > 0.001) {
+                existing.amount = total;
+                changed = true;
+            }
+        } else {
+            budgetEntries.push({
+                id: Date.now() + (Math.random() * 999 | 0),
+                date,
+                type: 'income',
+                cat: 'Taxi Income',
+                amount: total,
+                note: 'Auto — daily taxi earnings',
+                autoSync: true,
+                syncDate: date
+            });
+            changed = true;
+        }
+    });
+
+    // Remove stale auto-sync entries for dates that no longer have taxi data
+    const before = budgetEntries.length;
+    budgetEntries = budgetEntries.filter(e => !e.autoSync || (dateMap[e.syncDate] && dateMap[e.syncDate] > 0));
+    if (budgetEntries.length !== before) changed = true;
+
+    if (changed) {
+        budgetEntries.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+        localStorage.setItem('budget_entries', JSON.stringify(budgetEntries));
+        renderBudget();
+    }
 }
 
 // ── Budget ─────────────────────────────────────────────────────
@@ -1022,15 +1072,18 @@ function renderBudget() {
             (e.type === 'savings' || e.type === 'withdrawal') ? (e.account  || 'General') :
             (e.type === 'loan'    || e.type === 'repayment')  ? (e.loanName || 'Loan')    :
             (e.cat || 'General');
+        const autoTag = e.autoSync
+            ? ' <span class="tag" style="background:rgba(246,224,94,0.15);color:#f6e05e">auto</span>'
+            : '';
         return `
             <div class="entry-item">
                 <div class="entry-meta">
-                    <div class="entry-date">${fmtDate(e.date)} · <span class="tag">${label}</span></div>
+                    <div class="entry-date">${fmtDate(e.date)} · <span class="tag">${label}</span>${autoTag}</div>
                     ${e.note ? `<div class="entry-note">${e.note}</div>` : ''}
                 </div>
                 <div class="entry-right">
                     <span class="entry-amount ${cfg.amtClass}">${cfg.sign}${fmt(e.amount)}</span>
-                    <button class="del-btn" onclick="deleteBudget(${e.id})">✕</button>
+                    ${e.autoSync ? '' : `<button class="del-btn" onclick="deleteBudget(${e.id})">✕</button>`}
                 </div>
             </div>`;
     }).join('');

@@ -1,4 +1,4 @@
-const CACHE = 'tracker-v9';
+const CACHE = 'tracker-v10';
 const FILES = ['./index.html', './manifest.json', './sw.js', './icon.svg'];
 
 self.addEventListener('install', e => {
